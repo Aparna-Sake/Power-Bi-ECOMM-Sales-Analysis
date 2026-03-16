@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global E-Commerce Analytics 2011–2014</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --surface: #0f1623;
+    --surface2: #162030;
+    --border: #1e2d45;
+    --border2: #243550;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #334155;
+    --pbi-yellow: #f2c811;
+    --pbi-dark: #050810;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR (Power BI style) ── */
+  .topbar {
+    background: var(--pbi-dark);
+    padding: 0 20px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .pbi-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.2px;
+  }
+  .pbi-icon {
+    width: 22px; height: 22px;
+    background: var(--pbi-yellow);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--pbi-dark);
+  }
+  .topbar-nav { display: flex; gap: 2px; }
+  .topbar-btn {
+    padding: 6px 12px; border-radius: 4px;
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    cursor: pointer; border: none; background: none;
+    transition: all 0.15s;
+  }
+  .topbar-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .topbar-btn.active { background: rgba(242,200,17,0.15); color: var(--pbi-yellow); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .topbar-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── REPORT HEADER ── */
+  .report-header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--pbi-yellow);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .report-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .report-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .report-badges { display: flex; gap: 8px; align-items: center; }
+  .rbadge {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  }
+  .rbadge-yellow { background: rgba(242,200,17,0.12); color: #f2c811; border: 1px solid rgba(242,200,17,0.3); }
+  .rbadge-blue { background: rgba(59,130,246,0.12); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+
+  /* ── PAGE TABS ── */
+  .page-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+    gap: 0;
+  }
+  .ptab {
+    padding: 12px 20px;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .ptab:hover { color: var(--text); }
+  .ptab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* ── CANVAS ── */
+  .canvas { padding: 24px 28px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── KPI STRIP ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .kpi:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+  .kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi.k1::after { background: #3b82f6; }
+  .kpi.k2::after { background: #10b981; }
+  .kpi.k3::after { background: #a78bfa; }
+  .kpi.k4::after { background: #fbbf24; }
+  .kpi.k5::after { background: #22d3ee; }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .kpi-val { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--subtle); margin-top: 6px; }
+  .kpi-up { color: #34d399; font-weight: 600; }
+  .kpi-icon { position: absolute; right: 14px; top: 14px; font-size: 22px; opacity: 0.12; }
+
+  /* ── CHART GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-full { margin-bottom: 16px; }
+  .grid-half-tall { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    margin-bottom: 3px; display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .card-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .chart-wrap { position: relative; }
+
+  /* ── LEGEND PILLS ── */
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── DONUT CENTER ── */
+  .donut-wrap { position: relative; }
+  .donut-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .donut-label .dl-val { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+  .donut-label .dl-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── TABLE ── */
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .tbl td { font-size: 12px; padding: 9px 10px; border-bottom: 1px solid rgba(30,45,69,0.8); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: var(--surface2); }
+  .tbl .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pg { background: rgba(16,185,129,0.15); color: #34d399; }
+  .pr { background: rgba(239,68,68,0.15); color: #f87171; }
+  .pb { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .pa { background: rgba(245,158,11,0.15); color: #fcd34d; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-right: 4px; }
+  .filter-btn {
+    padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border2); background: var(--surface2);
+    color: var(--muted); transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+  .ins {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid transparent;
+  }
+  .ins.good { border-left-color: #10b981; }
+  .ins.bad  { border-left-color: #ef4444; }
+  .ins.warn { border-left-color: #f59e0b; }
+  .ins.info { border-left-color: #3b82f6; }
+  .ins-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .ins-text { font-size: 11px; color: var(--muted); line-height: 1.65; }
+  .ins-val { font-weight: 700; }
+  .green { color: #34d399; }
+  .red   { color: #f87171; }
+  .amber { color: #fcd34d; }
+  .blue  { color: #93c5fd; }
+
+  /* ── FOOTER ── */
+  .footer { text-align: center; padding: 18px; font-size: 11px; color: var(--subtle); border-top: 1px solid var(--border); background: var(--surface); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.3px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media print {
+    .topbar, .page-tabs, .filter-bar { display: none !important; }
+    .page { display: block !important; page-break-after: always; }
+    body { background: #080c14; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="pbi-logo">
+      <div class="pbi-icon">PB</div>
+      Power BI Desktop
+    </div>
+    <div class="topbar-nav">
+      <button class="topbar-btn">File</button>
+      <button class="topbar-btn">Home</button>
+      <button class="topbar-btn">Insert</button>
+      <button class="topbar-btn active">View</button>
+      <button class="topbar-btn">Modeling</button>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-tag">ECOMM_DATA.xlsx</span>
+    <span class="topbar-tag">51,290 rows</span>
+  </div>
+</div>
+
+<!-- REPORT HEADER -->
+<div class="report-header">
+  <div>
+    <div class="report-title">Global E-Commerce Analytics 2011–2014</div>
+    <div class="report-meta">Superstore Dataset · 3 tables · Orders, Returns, People · Last refreshed: Mar 2026</div>
+  </div>
+  <div class="report-badges">
+    <span class="rbadge rbadge-yellow">Power BI Report</span>
+    <span class="rbadge rbadge-blue">4 Report Pages</span>
+  </div>
+</div>
+
+<!-- PAGE TABS -->
+<div class="page-tabs">
+  <div class="ptab active" onclick="showPage('overview', this)">Overview</div>
+  <div class="ptab" onclick="showPage('categories', this)">Categories</div>
+  <div class="ptab" onclick="showPage('markets', this)">Markets</div>
+  <div class="ptab" onclick="showPage('insights', this)">Insights</div>
+</div>
+
+<!-- ═══════════════════ PAGE 1: OVERVIEW ═══════════════════ -->
+<div class="canvas">
+<div class="page active" id="page-overview">
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">Year</span>
+    <button class="filter-btn on" onclick="filterYear('all',this)">All Years</button>
+    <button class="filter-btn" onclick="filterYear('2011',this)">2011</button>
+    <button class="filter-btn" onclick="filterYear('2012',this)">2012</button>
+    <button class="filter-btn" onclick="filterYear('2013',this)">2013</button>
+    <button class="filter-btn" onclick="filterYear('2014',this)">2014</button>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-row">
+    <div class="kpi k1">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-val" id="kpi-rev">12.64M</div>
+      <div class="kpi-sub"><span class="kpi-up">↑ 90.3%</span> vs 2011</div>
+    </div>
+    <div class="kpi k2">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">Total Profit</div>
+      <div class="kpi-val" id="kpi-profit">1.47M</div>
+      <div class="kpi-sub"><span class="kpi-up">↑ 102.6%</span> 4-year growth</div>
+    </div>
+    <div class="kpi k3">
+      <div class="kpi-icon">%</div>
+      <div class="kpi-label">Profit Margin</div>
+      <div class="kpi-val" id="kpi-margin">0.12</div>
+      <div class="kpi-sub">Industry avg ~10%</div>
+    </div>
+    <div class="kpi k4">
+      <div class="kpi-icon">🛒</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-val" id="kpi-orders">25K</div>
+      <div class="kpi-sub"><span class="kpi-up">↑ 71%</span> since 2011</div>
+    </div>
+    <div class="kpi k5">
+      <div class="kpi-icon">$</div>
+      <div class="kpi-label">Avg Order Value</div>
+      <div class="kpi-val" id="kpi-aov">504.99</div>
+      <div class="kpi-sub">Per unique order</div>
+    </div>
+  </div>
+
+  <!-- REVENUE & PROFIT BY YEAR + REVENUE BY MONTH -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Revenue &amp; Profit by Year</div>
+      <div class="card-sub">Annual performance 2011–2014</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Total Revenue</span>
+        <span class="leg"><span class="leg-dot" style="background:#10b981"></span>Total Profit</span>
+      </div>
+      <div class="chart-wrap"><canvas id="yearChart" height="200"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Revenue by Month</div>
+      <div class="card-sub">All years combined — strong Q4 seasonality</div>
+      <div class="legend" id="monthLegend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>2011</span>
+        <span class="leg"><span class="leg-dot" style="background:#a78bfa"></span>2012</span>
+        <span class="leg"><span class="leg-dot" style="background:#22d3ee"></span>2013</span>
+        <span class="leg"><span class="leg-dot" style="background:#fbbf24"></span>2014</span>
+      </div>
+      <div class="chart-wrap"><canvas id="monthChart" height="200"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ PAGE 2: CATEGORIES ═══════════════════ -->
+<div class="page" id="page-categories">
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">Revenue by Category</div>
+      <div class="card-sub">Technology leads at 37.53%</div>
+      <div class="donut-wrap">
+        <div class="donut-label">
+          <div class="dl-val">$12.6M</div>
+          <div class="dl-sub">Total</div>
+        </div>
+        <canvas id="catDonut" height="220"></canvas>
+      </div>
+    </div>
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-title">Revenue by Sub-Category</div>
+      <div class="card-sub">17 sub-categories · Phones top revenue · Tables only loss-maker</div>
+      <div class="chart-wrap"><canvas id="subCatChart" height="320"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card grid-full">
+    <div class="card-title">Sub-Category Performance Scorecard</div>
+    <div class="card-sub">Revenue, profit, margin and performance rating for all 17 sub-categories</div>
+    <table class="tbl" id="subTable"></table>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 3: MARKETS ═══════════════════ -->
+<div class="page" id="page-markets">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Revenue &amp; Profit by Market</div>
+      <div class="card-sub">APAC leads in both revenue and profit</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Total Revenue</span>
+        <span class="leg"><span class="leg-dot" style="background:#10b981"></span>Total Profit</span>
+      </div>
+      <div class="chart-wrap"><canvas id="marketChart" height="260"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Profit Margin by Market</div>
+      <div class="card-sub">Canada strongest margin · EMEA weakest</div>
+      <div class="chart-wrap" style="margin-top:20px"><canvas id="marginChart" height="260"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card grid-full">
+    <div class="card-title">Market Performance Table</div>
+    <div class="card-sub">Complete market breakdown with margin ratings</div>
+    <table class="tbl" id="marketTable"></table>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 4: INSIGHTS ═══════════════════ -->
+<div class="page" id="page-insights">
+  <div class="insight-grid">
+    <div class="ins good">
+      <div class="ins-title">🏆 Technology: Star Performer</div>
+      <div class="ins-text">Technology drives <span class="ins-val green">$4.74M (37.5%)</span> of revenue with $663K profit. Phones and Copiers alone account for $3.2M. Highest margin category.</div>
+    </div>
+    <div class="ins bad">
+      <div class="ins-title">⚠ Tables: Cash Drain</div>
+      <div class="ins-text">$757K revenue but <span class="ins-val red">-$64K profit</span>. Every sale loses money. Driven by excessive discounting. Urgent review needed.</div>
+    </div>
+    <div class="ins good">
+      <div class="ins-title">🌏 APAC: Growth Engine</div>
+      <div class="ins-text">Leads all 7 markets at <span class="ins-val green">$3.58M revenue</span> and $436K profit (12.2% margin). Central region is #1 globally at $2.82M.</div>
+    </div>
+    <div class="ins bad">
+      <div class="ins-title">💸 Discounts Destroying Profit</div>
+      <div class="ins-text">Discounts above 30% generate <span class="ins-val red">-$381K net loss</span>. Cap at 20% would recover this entirely. #1 profit lever available.</div>
+    </div>
+    <div class="ins warn">
+      <div class="ins-title">📅 Strong Q4 Seasonality</div>
+      <div class="ins-text">Nov–Dec consistently <span class="ins-val amber">30–40% above average</span>. September also peaks. Pre-stock inventory by August to avoid stockouts.</div>
+    </div>
+    <div class="ins warn">
+      <div class="ins-title">⚡ SE Asia: Margin Risk</div>
+      <div class="ins-text">$884K revenue but only <span class="ins-val amber">$17.8K profit (2.0%)</span>. Lowest of all regions. Likely heavy discounting or shipping cost overrun.</div>
+    </div>
+    <div class="ins info">
+      <div class="ins-title">📈 4-Year Revenue CAGR</div>
+      <div class="ins-text">Revenue grew from $2.26M to $4.30M — a <span class="ins-val blue">17.4% CAGR</span>. 2013→2014 was the strongest year (+26.3%). Momentum accelerating.</div>
+    </div>
+    <div class="ins info">
+      <div class="ins-title">🚚 Shipping: Hidden Cost Driver</div>
+      <div class="ins-text">Total shipping cost ~<span class="ins-val blue">$1.35M</span> — nearly equal to total profit. Standard Class (59.9% of orders) is the dominant mode. Premium modes underutilised.</div>
+    </div>
+    <div class="ins good">
+      <div class="ins-title">👥 Consumer Segment Dominates</div>
+      <div class="ins-text">Consumer = <span class="ins-val green">51.5% of revenue ($6.5M)</span>. Corporate at 30.2% is the biggest B2B growth opportunity with higher average order values.</div>
+    </div>
+  </div>
+
+  <div class="card grid-full">
+    <div class="card-title">🎯 Strategic Priority Matrix</div>
+    <div class="card-sub">Ranked action items by business impact and urgency</div>
+    <table class="tbl" style="margin-top:12px">
+      <thead><tr><th>#</th><th>Focus Area</th><th>Problem</th><th>Action</th><th>Est. Impact</th><th>Urgency</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Discount Policy</td><td>30%+ discounts = -$381K loss</td><td>Hard cap at 20% max</td><td><span class="pill pg">+$381K</span></td><td><span class="pill pr">Critical</span></td></tr>
+        <tr><td><strong>2</strong></td><td>Tables Sub-Cat</td><td>-$64K net loss on $757K sales</td><td>Reprice or discontinue</td><td><span class="pill pg">+$64K</span></td><td><span class="pill pr">Critical</span></td></tr>
+        <tr><td><strong>3</strong></td><td>APAC Investment</td><td>Highest ROI market</td><td>Allocate 35%+ marketing</td><td><span class="pill pg">+15–20% rev</span></td><td><span class="pill pa">Medium</span></td></tr>
+        <tr><td><strong>4</strong></td><td>SE Asia Ops</td><td>2.0% margin on $884K</td><td>Audit pricing + shipping</td><td><span class="pill pg">+5–8% margin</span></td><td><span class="pill pa">Medium</span></td></tr>
+        <tr><td><strong>5</strong></td><td>Technology Growth</td><td>Highest margin category</td><td>Expand SKU range</td><td><span class="pill pg">+10% rev</span></td><td><span class="pill pb">Low</span></td></tr>
+        <tr><td><strong>6</strong></td><td>Q4 Readiness</td><td>30–40% seasonal spike</td><td>Pre-stock by Sept 1</td><td><span class="pill pg">+5% Q4</span></td><td><span class="pill pb">Low</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /canvas -->
+
+<div class="footer">
+  GLOBAL E-COMMERCE ANALYTICS · POWER BI DESKTOP REPORT · SUPERSTORE 2011–2014 · 51,290 ROWS · 3 TABLES · COMPUTED FROM ECOMM_DATA.XLSX
+</div>
+
+<script>
+// ── EXACT DATA FROM SOURCE (computed via pandas) ──────────────────────────────
+const DATA = {
+  years: ['2011','2012','2013','2014'],
+  yearSales:   [2259451, 2677439, 3405746, 4299866],
+  yearProfit:  [248941,  307415,  406935,  504166],
+
+  months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+  monthSales2011: [98898, 91152, 145729, 116916, 146748, 215207, 115510, 207581, 290214, 199071, 298497, 333926],
+  monthSales2012: [135781,100510,163077,161052,208365,256176,145237,303143,373483,290044,419527,321046],
+  monthSales2013: [173002,182773,240124,237568,277491,343688,243097,346009,407427,378394,422416,360758],
+  monthSales2014: [285327,250671,350847,309628,419002,445629,302745,398729,508220,439148,561207,828913],
+
+  catLabels: ['Technology','Furniture','Office Supplies'],
+  catSales:  [4744557, 4110874, 3787070],
+  catPct:    ['37.53%','32.52%','29.96%'],
+
+  subCat: [
+    {name:'Phones',       cat:'Tech',  sales:1706824, profit:216717},
+    {name:'Copiers',      cat:'Tech',  sales:1509436, profit:258568},
+    {name:'Chairs',       cat:'Furn',  sales:1501682, profit:140396},
+    {name:'Bookcases',    cat:'Furn',  sales:1466572, profit:161924},
+    {name:'Storage',      cat:'OfficS',sales:1127086, profit:108461},
+    {name:'Appliances',   cat:'OfficS',sales:1011064, profit:141681},
+    {name:'Machines',     cat:'Tech',  sales:779060,  profit:58868},
+    {name:'Tables',       cat:'Furn',  sales:757042,  profit:-64083},
+    {name:'Accessories',  cat:'Tech',  sales:749237,  profit:129626},
+    {name:'Binders',      cat:'OfficS',sales:461912,  profit:72450},
+    {name:'Furnishings',  cat:'Furn',  sales:385578,  profit:46967},
+    {name:'Art',          cat:'OfficS',sales:372092,  profit:57954},
+    {name:'Paper',        cat:'OfficS',sales:244292,  profit:59208},
+    {name:'Supplies',     cat:'OfficS',sales:243074,  profit:22583},
+    {name:'Envelopes',    cat:'OfficS',sales:170904,  profit:29601},
+    {name:'Fasteners',    cat:'OfficS',sales:83242,   profit:11525},
+    {name:'Labels',       cat:'OfficS',sales:73404,   profit:15011},
+  ],
+
+  markets: ['APAC','EU','US','LATAM','EMEA','Africa','Canada'],
+  mktSales:  [3585744, 2938089, 2297201, 2164605, 806161, 783773, 66928],
+  mktProfit: [436000,  372830,  286397,  221643,  43898,  88872,  17817],
+};
+
+// ── CHART CONFIG ──────────────────────────────────────────────────────────────
+const FONT = 'Inter, sans-serif';
+const MUTED = '#475569';
+const BORDER = '#1e2d45';
+const TICK_COLOR = '#64748b';
+
+const base = {
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#162030',
+      titleColor: '#e2e8f0',
+      bodyColor: '#64748b',
+      borderColor: '#1e2d45',
+      borderWidth: 1,
+      padding: 10,
+      cornerRadius: 6,
+      titleFont: { family: FONT, weight: '600', size: 12 },
+      bodyFont: { family: FONT, size: 11 },
+    }
+  },
+  scales: {
+    x: { ticks: { color: TICK_COLOR, font: { family: FONT, size: 11 } }, grid: { color: BORDER } },
+    y: { ticks: { color: TICK_COLOR, font: { family: FONT, size: 11 } }, grid: { color: BORDER } }
+  }
+};
+
+function fmtM(n) { return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+(n/1e3).toFixed(0)+'K'; }
+function pct(n) { return (n*100).toFixed(1)+'%'; }
+
+// ── YEAR CHART ────────────────────────────────────────────────────────────────
+function makeYearChart(sales=DATA.yearSales, profit=DATA.yearProfit) {
+  const ctx = document.getElementById('yearChart');
+  if (ctx._chart) ctx._chart.destroy();
+  ctx._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: DATA.years,
+      datasets: [
+        { label: 'Total Revenue', data: sales, backgroundColor: '#3b82f6', borderRadius: 5 },
+        { label: 'Total Profit',  data: profit, backgroundColor: '#10b981', borderRadius: 5 }
+      ]
+    },
+    options: {
+      ...base, responsive: true,
+      plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` ${c.dataset.label}: ${fmtM(c.raw)}` } } },
+      scales: {
+        x: base.scales.x,
+        y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, callback: v => fmtM(v) } }
+      }
+    }
+  });
+}
+
+// ── MONTH CHART ───────────────────────────────────────────────────────────────
+let activeYear = 'all';
+function makeMonthChart() {
+  const ctx = document.getElementById('monthChart');
+  if (ctx._chart) ctx._chart.destroy();
+  let datasets;
+  if (activeYear === 'all') {
+    datasets = [
+      { label:'2011', data: DATA.monthSales2011, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', tension:0.4, fill:true, pointRadius:3 },
+      { label:'2012', data: DATA.monthSales2012, borderColor:'#a78bfa', backgroundColor:'rgba(167,139,250,0.06)', tension:0.4, fill:true, pointRadius:3 },
+      { label:'2013', data: DATA.monthSales2013, borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,0.06)',  tension:0.4, fill:true, pointRadius:3 },
+      { label:'2014', data: DATA.monthSales2014, borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.08)',  tension:0.4, fill:true, pointRadius:3 },
+    ];
+  } else {
+    const d = { '2011':DATA.monthSales2011,'2012':DATA.monthSales2012,'2013':DATA.monthSales2013,'2014':DATA.monthSales2014 }[activeYear];
+    datasets = [{ label: activeYear, data: d, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.10)', tension:0.4, fill:true, pointRadius:4 }];
+  }
+  ctx._chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: DATA.months, datasets },
+    options: {
+      ...base, responsive: true,
+      plugins: { ...base.plugins, legend: { display: false }, tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` ${c.dataset.label}: ${fmtM(c.raw)}` } } },
+      scales: {
+        x: { ...base.scales.x, ticks: { ...base.scales.x.ticks, maxRotation: 45, minRotation: 30 } },
+        y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, callback: v => fmtM(v) } }
+      }
+    }
+  });
+}
+
+// ── CATEGORY DONUT ────────────────────────────────────────────────────────────
+function makeCatDonut() {
+  new Chart(document.getElementById('catDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: DATA.catLabels,
+      datasets: [{ data: DATA.catSales, backgroundColor: ['#3b82f6','#a78bfa','#22d3ee'], borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#64748b', font: { family: FONT, size: 11 }, padding: 12, boxWidth: 12 } },
+        tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` ${c.label}: ${fmtM(c.raw)} (${DATA.catPct[c.dataIndex]})` } }
+      }
+    }
+  });
+}
+
+// ── SUB-CAT CHART ─────────────────────────────────────────────────────────────
+function makeSubCatChart() {
+  const names = DATA.subCat.map(d => d.name);
+  const sales = DATA.subCat.map(d => d.sales);
+  const profit = DATA.subCat.map(d => d.profit);
+  new Chart(document.getElementById('subCatChart'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [
+        { label: 'Revenue', data: sales, backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 4 },
+        { label: 'Profit',  data: profit, backgroundColor: profit.map(p => p<0?'rgba(239,68,68,0.85)':'rgba(16,185,129,0.85)'), borderRadius: 4 }
+      ]
+    },
+    options: {
+      ...base, responsive: true, indexAxis: 'y',
+      plugins: { ...base.plugins,
+        legend: { display: true, position: 'top', labels: { color: '#64748b', font: { family: FONT, size: 11 }, boxWidth: 12, padding: 10 } },
+        tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` ${c.dataset.label}: ${fmtM(c.raw)}` } }
+      },
+      scales: {
+        x: { ...base.scales.x, ticks: { ...base.scales.x.ticks, callback: v => fmtM(v) } },
+        y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, font: { family: FONT, size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── SUB-CAT TABLE ─────────────────────────────────────────────────────────────
+function buildSubTable() {
+  const el = document.getElementById('subTable');
+  let html = '<thead><tr><th>#</th><th>Sub-Category</th><th>Category</th><th class="num">Revenue</th><th class="num">Profit</th><th class="num">Margin</th><th>Status</th></tr></thead><tbody>';
+  DATA.subCat.forEach((d,i) => {
+    const m = (d.profit/d.sales*100).toFixed(1);
+    const status = d.profit<0?'<span class="pill pr">Loss</span>':m>20?'<span class="pill pg">Strong</span>':m>10?'<span class="pill pb">Good</span>':'<span class="pill pa">Weak</span>';
+    const catColor = d.cat==='Tech'?'pb':d.cat==='Furn'?'pa':'pg';
+    html += `<tr>
+      <td style="color:var(--subtle);font-size:11px">${i+1}</td>
+      <td style="font-weight:600;font-size:12px">${d.name}</td>
+      <td><span class="pill ${catColor}">${d.cat}</span></td>
+      <td class="num">${fmtM(d.sales)}</td>
+      <td class="num" style="color:${d.profit<0?'var(--red)':'var(--green)'}">${d.profit<0?'-'+fmtM(Math.abs(d.profit)):fmtM(d.profit)}</td>
+      <td class="num" style="color:${m<0?'var(--red)':m>20?'var(--green)':'var(--text)'}">${m}%</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+  el.innerHTML = html + '</tbody>';
+}
+
+// ── MARKET CHART ──────────────────────────────────────────────────────────────
+function makeMarketChart() {
+  new Chart(document.getElementById('marketChart'), {
+    type: 'bar',
+    data: {
+      labels: DATA.markets,
+      datasets: [
+        { label: 'Total Revenue', data: DATA.mktSales,  backgroundColor: 'rgba(59,130,246,0.85)', borderRadius: 5 },
+        { label: 'Total Profit',  data: DATA.mktProfit, backgroundColor: 'rgba(16,185,129,0.85)',  borderRadius: 5 }
+      ]
+    },
+    options: {
+      ...base, responsive: true,
+      plugins: { ...base.plugins,
+        legend: { display: true, position: 'top', labels: { color: '#64748b', font: { family: FONT, size: 11 }, boxWidth: 12, padding: 10 } },
+        tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` ${c.dataset.label}: ${fmtM(c.raw)}` } }
+      },
+      scales: {
+        x: base.scales.x,
+        y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, callback: v => fmtM(v) } }
+      }
+    }
+  });
+}
+
+// ── MARGIN CHART ──────────────────────────────────────────────────────────────
+function makeMarginChart() {
+  const margins = DATA.markets.map((m,i) => (DATA.mktProfit[i]/DATA.mktSales[i]*100).toFixed(1));
+  new Chart(document.getElementById('marginChart'), {
+    type: 'bar',
+    data: {
+      labels: DATA.markets,
+      datasets: [{
+        label: 'Profit Margin %',
+        data: margins,
+        backgroundColor: margins.map(m => m>12?'rgba(16,185,129,0.85)':m>8?'rgba(59,130,246,0.85)':'rgba(245,158,11,0.85)'),
+        borderRadius: 5
+      }]
+    },
+    options: {
+      ...base, responsive: true,
+      plugins: { ...base.plugins, tooltip: { ...base.plugins.tooltip, callbacks: { label: c => ` Margin: ${c.raw}%` } } },
+      scales: {
+        x: base.scales.x,
+        y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, callback: v => v+'%' } }
+      }
+    }
+  });
+}
+
+// ── MARKET TABLE ──────────────────────────────────────────────────────────────
+function buildMarketTable() {
+  const el = document.getElementById('marketTable');
+  let html = '<thead><tr><th>#</th><th>Market</th><th class="num">Revenue</th><th class="num">Profit</th><th class="num">Margin</th><th>Rating</th></tr></thead><tbody>';
+  DATA.markets.forEach((m,i) => {
+    const margin = (DATA.mktProfit[i]/DATA.mktSales[i]*100).toFixed(1);
+    const rating = margin>12?'<span class="pill pg">Strong</span>':margin>8?'<span class="pill pb">Good</span>':margin>5?'<span class="pill pa">Average</span>':'<span class="pill pr">Weak</span>';
+    html += `<tr>
+      <td style="color:var(--subtle);font-size:11px">${i+1}</td>
+      <td style="font-weight:600;font-size:12px">${m}</td>
+      <td class="num">${fmtM(DATA.mktSales[i])}</td>
+      <td class="num" style="color:var(--green)">${fmtM(DATA.mktProfit[i])}</td>
+      <td class="num">${margin}%</td>
+      <td>${rating}</td>
+    </tr>`;
+  });
+  el.innerHTML = html + '</tbody>';
+}
+
+// ── YEAR FILTER ───────────────────────────────────────────────────────────────
+function filterYear(y, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  activeYear = y;
+
+  const kpis = {
+    all:  { rev:'12.64M', profit:'1.47M', margin:'0.12', orders:'25K', aov:'504.99' },
+    2011: { rev:'2.26M',  profit:'249K',  margin:'0.11', orders:'6.2K', aov:'365' },
+    2012: { rev:'2.68M',  profit:'307K',  margin:'0.11', orders:'7.1K', aov:'378' },
+    2013: { rev:'3.41M',  profit:'407K',  margin:'0.12', orders:'9.0K', aov:'378' },
+    2014: { rev:'4.30M',  profit:'504K',  margin:'0.12', orders:'11.2K', aov:'384' },
+  };
+  const k = kpis[y];
+  document.getElementById('kpi-rev').textContent = k.rev;
+  document.getElementById('kpi-profit').textContent = k.profit;
+  document.getElementById('kpi-margin').textContent = k.margin;
+  document.getElementById('kpi-orders').textContent = k.orders;
+  document.getElementById('kpi-aov').textContent = k.aov;
+
+  if (y === 'all') {
+    makeYearChart();
+  } else {
+    const idx = DATA.years.indexOf(y);
+    makeYearChart([DATA.yearSales[idx]], [DATA.yearProfit[idx]]);
+  }
+  makeMonthChart();
+}
+
+// ── PAGE NAV ──────────────────────────────────────────────────────────────────
+let inited = {};
+function showPage(name, tabEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  tabEl.classList.add('active');
+
+  if (!inited[name]) {
+    inited[name] = true;
+    if (name==='categories') { makeCatDonut(); makeSubCatChart(); buildSubTable(); }
+    if (name==='markets')    { makeMarketChart(); makeMarginChart(); buildMarketTable(); }
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  inited.overview = true;
+  makeYearChart();
+  makeMonthChart();
+};
+</script>
+</body>
+</html>
